@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 from transformers import BertTokenizer, BertForSequenceClassification
+from deep_translator import GoogleTranslator
+
 import nltk
 from nltk.tokenize import sent_tokenize
 
@@ -23,6 +25,14 @@ tokenizer = BertTokenizer.from_pretrained("saved_model")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 model.eval()
+
+def translate_tamil_to_english(text):
+    try:
+        translated = GoogleTranslator(source='ta', target='en').translate(text)
+        return translated
+    except Exception as e:
+        print("⚠️ Translation failed:", e)
+        return text  # fallback to original
 
 # 🔹 Utility: Split into clean sentences
 def split_into_sentences(text):
@@ -67,9 +77,19 @@ def predict_paragraph_emotions(paragraph):
 
 
 # 🧪 Example input: long review (just copy-paste in one line!)
-if __name__ == "__main__":
-    review = (
-        "I’m very disappointed with the Moratuwa Pizza Hut outlet. Most of the time, the pizzas barely have any cheese, which completely ruins the taste. The quality of the food is consistently poor, and it's definitely not what you'd expect from a brand like Pizza Hut. Honestly, this is the worst Pizza Hut outlet I’ve experienced. Really hope the management looks into this seriously and makes improvements."
-    )
+# if __name__ == "__main__":
+#     review = (
+#       "I’m very disappointed with the Moratuwa Pizza Hut outlet. Most of the time, the pizzas barely have any cheese, which completely ruins the taste. The quality of the food is consistently poor, and it's definitely not what you'd expect from a brand like Pizza Hut. Honestly, this is the worst Pizza Hut outlet I’ve experienced. Really hope the management looks into this seriously and makes improvements."
+#     )
+#
+#     predict_paragraph_emotions(review)
 
-    predict_paragraph_emotions(review)
+if __name__ == "__main__":
+    review = "இது மிகவும் மோசமாக உள்ளது ஆனால் நான் சிரிக்கிறேன்!"
+
+    # Translate Tamil → English
+    translated_review = translate_tamil_to_english(review)
+    print(f"\n🌐 Translated Review:\n{translated_review}\n")
+
+    # Now predict using the translated English
+    predict_paragraph_emotions(translated_review)
