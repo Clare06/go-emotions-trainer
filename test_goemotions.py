@@ -1,10 +1,13 @@
-# test_goemotions.py
-
 import torch
 import numpy as np
 from transformers import BertTokenizer, BertForSequenceClassification
+import nltk
+from nltk.tokenize import sent_tokenize
 
-# Emotion labels (same order used in training)
+# Download tokenizer model (if not already)
+# nltk.download("punkt")
+
+# Emotion labels
 emotion_labels = [
     'admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring',
     'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval',
@@ -13,33 +16,60 @@ emotion_labels = [
     'relief', 'remorse', 'sadness', 'surprise', 'neutral'
 ]
 
-# Load model and tokenizer from saved folder
+# Load model + tokenizer
 model = BertForSequenceClassification.from_pretrained("saved_model")
 tokenizer = BertTokenizer.from_pretrained("saved_model")
 
-# Move to CUDA if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 model.eval()
 
-# Prediction function
+# 🔹 Utility: Split into clean sentences
+def split_into_sentences(text):
+    sentences = sent_tokenize(text.strip())
+    return [s.strip() for s in sentences if s.strip()]
+
+# 🔹 Predict for a single sentence
 def predict_emotion(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=128)
     inputs = {k: v.to(device) for k, v in inputs.items()}
-
     with torch.no_grad():
         logits = model(**inputs).logits
     probs = torch.sigmoid(logits)[0].cpu().numpy()
+    return probs
 
-    # Top 3 predicted emotions
-    top_indices = probs.argsort()[-3:][::-1]
-    print(f"\nInput: {text}")
-    print("Top predicted emotions:")
-    for idx in top_indices:
-        print(f"- {emotion_labels[idx]} ({probs[idx]*100:.1f}%)")
+# 🔹 Predict for full paragraph (auto split, print debug)
+def predict_paragraph_emotions(paragraph):
+    sentences = split_into_sentences(paragraph)
+    all_probs = []
 
-# ✨ Try testing here
+    print(f"\n📘 Total Sentences Detected: {len(sentences)}")
+
+    for i, sent in enumerate(sentences):
+        probs = predict_emotion(sent)
+        all_probs.append(probs)
+
+        # Show top emotions for each sentence
+        top_indices = probs.argsort()[-3:][::-1]
+        print(f"\n🔹 Sentence {i+1}: {sent}")
+        for idx in top_indices:
+            print(f"   - {emotion_labels[idx]} ({probs[idx]*100:.1f}%)")
+
+    # Aggregate all
+    avg_probs = np.mean(all_probs, axis=0)
+    # Sort all emotions by descending probability
+    sorted_indices = np.argsort(avg_probs)[::-1]
+
+    print("\n🔻 Final Aggregated Emotion Prediction (All Sentences):")
+    for idx in sorted_indices:
+        if avg_probs[idx] > 0.01:  # show only >1% scores
+            print(f"   - {emotion_labels[idx]} ({avg_probs[idx] * 100:.1f}%)")
+
+
+# 🧪 Example input: long review (just copy-paste in one line!)
 if __name__ == "__main__":
-    predict_emotion("I'm not sure if I'm happy or just confused.")
-    predict_emotion("This makes me so proud and joyful!")
-    predict_emotion("I don't care anymore. I'm done.")
+    review = (
+        "I’m very disappointed with the Moratuwa Pizza Hut outlet. Most of the time, the pizzas barely have any cheese, which completely ruins the taste. The quality of the food is consistently poor, and it's definitely not what you'd expect from a brand like Pizza Hut. Honestly, this is the worst Pizza Hut outlet I’ve experienced. Really hope the management looks into this seriously and makes improvements."
+    )
+
+    predict_paragraph_emotions(review)
