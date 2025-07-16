@@ -1,0 +1,11 @@
+# Ignore folders
+results/
+saved_model/
+venv/
+__pycache__/
+
+
+# Ignore temporary files
+*.log
+*.tmp 
+*.idea/
