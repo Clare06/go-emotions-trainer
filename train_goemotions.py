@@ -114,18 +114,3 @@ def predict_emotion(text):
 # Try a sample
 predict_emotion("I feel so disappointed but also kind of relieved.")
 
-# import pandas as pd
-#
-# df1 = pd.read_csv("goemotions_1.csv")
-# df2 = pd.read_csv("goemotions_2.csv")
-# df3 = pd.read_csv("goemotions_3.csv")
-# df = pd.concat([df1, df2, df3], ignore_index=True)
-#
-# emotion_columns = df.columns.tolist()[1:]
-#
-# # Check for non-numeric values
-# for col in emotion_columns:
-#     bad_rows = df[~df[col].astype(str).str.match(r"^[01]$")]
-#     if not bad_rows.empty:
-#         print(f"\n❗ Column '{col}' has bad values:")
-#         print(bad_rows[["text", col]])
