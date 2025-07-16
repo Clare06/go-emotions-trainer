@@ -8,9 +8,9 @@ from transformers import BertTokenizer, BertForSequenceClassification, Trainer, 
 from sklearn.model_selection import train_test_split
 
 # Load all 3 datasets
-df1 = pd.read_csv("goemotions_1.csv")
-df2 = pd.read_csv("goemotions_2.csv")
-df3 = pd.read_csv("goemotions_3.csv")
+df1 = pd.read_csv("dataset/goemotions_1.csv")
+df2 = pd.read_csv("dataset/goemotions_2.csv")
+df3 = pd.read_csv("dataset/goemotions_3.csv")
 
 # Combine
 df = pd.concat([df1, df2, df3], ignore_index=True)
