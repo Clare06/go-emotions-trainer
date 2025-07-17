@@ -6,6 +6,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, hamming_loss, jaccard_score
 
 # Load all 3 datasets
 df1 = pd.read_csv("dataset/goemotions_1.csv")
@@ -36,7 +37,9 @@ train_texts, val_texts, train_labels, val_labels = train_test_split(
 )
 
 # Tokenize
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+# MULTI_MODEL_PATH = "D:\Academics\FYP\goemotionmodel\multi_cased_L-12_H-768_A-12\multi_cased_L-12_H-768_A-12"
+
+tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased", do_lower_case=False)
 
 train_enc = tokenizer(train_texts, truncation=True, padding=True, max_length=128, return_tensors="pt")
 val_enc = tokenizer(val_texts, truncation=True, padding=True, max_length=128, return_tensors="pt")
@@ -59,8 +62,14 @@ train_dataset = GoEmotionsDataset(train_enc, train_labels)
 val_dataset = GoEmotionsDataset(val_enc, val_labels)
 
 # Load model
+# model = BertForSequenceClassification.from_pretrained(
+#     "bert-base-uncased",
+#     num_labels=len(emotion_labels),
+#     problem_type="multi_label_classification"
+# )
+
 model = BertForSequenceClassification.from_pretrained(
-    "bert-base-uncased",
+    "bert-base-multilingual-cased",
     num_labels=len(emotion_labels),
     problem_type="multi_label_classification"
 )
@@ -69,17 +78,41 @@ model = BertForSequenceClassification.from_pretrained(
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
+
+# Define compute_metrics function for validation 🔧 NEW FUNCTION ADDED
+def compute_metrics(p):
+    logits, labels = p
+    # Convert logits to probabilities
+    probs = torch.sigmoid(torch.tensor(logits)).numpy()
+    # Threshold probabilities to get binary predictions (0 or 1)
+    preds = (probs > 0.5).astype(int)
+
+    # Calculate various metrics
+    metrics = {
+        'f1_micro': f1_score(labels, preds, average='micro'),
+        'f1_macro': f1_score(labels, preds, average='macro'),
+        'precision_micro': precision_score(labels, preds, average='micro'),
+        'recall_micro': recall_score(labels, preds, average='micro'),
+        'hamming_loss': hamming_loss(labels, preds),
+        'jaccard_micro': jaccard_score(labels, preds, average='micro'),
+        'subset_accuracy': accuracy_score(labels, preds),
+    }
+    return metrics
+
 # Training configuration
 training_args = TrainingArguments(
     output_dir="./results",
-    num_train_epochs=2,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=16,
+    num_train_epochs=3,  # 🔧 Increased from 2 to 3 for better convergence
+    per_device_train_batch_size=16,  # 🔧 Increased from 8
+    per_device_eval_batch_size=32,   # 🔧 Increased from 16
     eval_strategy="epoch",
     save_strategy="epoch",
     logging_dir="./logs",
     logging_steps=20,
+    load_best_model_at_end=True,  # 🔧 Added to load best model
+    metric_for_best_model="f1_micro",
 )
+
 
 # Trainer
 trainer = Trainer(
@@ -87,14 +120,15 @@ trainer = Trainer(
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=val_dataset,
+    compute_metrics=compute_metrics,
 )
 
 # Train
 trainer.train()
 
 # Save final model
-model.save_pretrained("saved_model")
-tokenizer.save_pretrained("saved_model")
+model.save_pretrained("saved_model_multi_cased_L-12_H-768_A-12")
+tokenizer.save_pretrained("saved_model_multi_cased_L-12_H-768_A-12")
 
 # Prediction function
 def predict_emotion(text):

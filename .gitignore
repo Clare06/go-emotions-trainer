@@ -1,11 +1,12 @@
 # Ignore folders
-results/
-saved_model/
+results/checkpoint*/
 venv/
 __pycache__/
+saved_model*/
 
 
 # Ignore temporary files
 *.log
 *.tmp 
 *.idea/
+*.env

@@ -1,4 +1,5 @@
 import torch
+import os
 import numpy as np
 from transformers import BertTokenizer, BertForSequenceClassification
 from deep_translator import GoogleTranslator
@@ -8,6 +9,9 @@ from nltk.tokenize import sent_tokenize
 
 # Download tokenizer model (if not already)
 # nltk.download("punkt")
+# 1. Get model path from environment variable
+MODEL_PATH = os.getenv("MODEL_PATH", "saved_model")  # Default if not set
+print(f"🔧 Using model: {MODEL_PATH}")
 
 # Emotion labels
 emotion_labels = [
@@ -19,8 +23,10 @@ emotion_labels = [
 ]
 
 # Load model + tokenizer
-model = BertForSequenceClassification.from_pretrained("saved_model")
-tokenizer = BertTokenizer.from_pretrained("saved_model")
+# model = BertForSequenceClassification.from_pretrained("saved_model")
+# tokenizer = BertTokenizer.from_pretrained("saved_model")
+model = BertForSequenceClassification.from_pretrained(MODEL_PATH)
+tokenizer = BertTokenizer.from_pretrained(MODEL_PATH)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
@@ -93,3 +99,5 @@ if __name__ == "__main__":
 
     # Now predict using the translated English
     predict_paragraph_emotions(translated_review)
+
+    # predict_paragraph_emotions(review)
