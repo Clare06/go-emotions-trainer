@@ -1,4 +1,5 @@
 # train_goemotions.py
+import os
 
 import pandas as pd
 import torch
@@ -38,6 +39,7 @@ train_texts, val_texts, train_labels, val_labels = train_test_split(
 
 # Tokenize
 # MULTI_MODEL_PATH = "D:\Academics\FYP\goemotionmodel\multi_cased_L-12_H-768_A-12\multi_cased_L-12_H-768_A-12"
+MODEL_NAME=os.getenv("MODEL_NAME", "bert-base-multilingual-cased")
 
 tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased", do_lower_case=False)
 
@@ -102,16 +104,19 @@ def compute_metrics(p):
 # Training configuration
 training_args = TrainingArguments(
     output_dir="./results",
-    num_train_epochs=3,  # 🔧 Increased from 2 to 3 for better convergence
-    per_device_train_batch_size=16,  # 🔧 Increased from 8
-    per_device_eval_batch_size=32,   # 🔧 Increased from 16
+    num_train_epochs=5,
+    per_device_train_batch_size=8,       # 🔽 Reduce this to avoid OOM
+    per_device_eval_batch_size=16,       # 🔽 Eval can still be larger
     eval_strategy="epoch",
     save_strategy="epoch",
     logging_dir="./logs",
     logging_steps=20,
-    load_best_model_at_end=True,  # 🔧 Added to load best model
+    load_best_model_at_end=True,
     metric_for_best_model="f1_micro",
+    fp16=True,                           # ✅ Enable mixed precision (saves VRAM)
+    gradient_accumulation_steps=2,       # ✅ Compensate for lower batch size
 )
+
 
 
 # Trainer
@@ -127,8 +132,8 @@ trainer = Trainer(
 trainer.train()
 
 # Save final model
-model.save_pretrained("saved_model_multi_cased_L-12_H-768_A-12")
-tokenizer.save_pretrained("saved_model_multi_cased_L-12_H-768_A-12")
+model.save_pretrained("saved_model_" + MODEL_NAME)
+tokenizer.save_pretrained("saved_model_" + MODEL_NAME)
 
 # Prediction function
 def predict_emotion(text):

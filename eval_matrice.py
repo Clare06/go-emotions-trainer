@@ -2,7 +2,8 @@
 import pandas as pd
 import torch
 import numpy as np
-from transformers import BertTokenizer, BertForSequenceClassification
+# from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import XLMRobertaTokenizer, XLMRobertaForSequenceClassification
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, hamming_loss, jaccard_score, \
     classification_report
@@ -38,11 +39,16 @@ labels = df[emotion_labels].apply(pd.to_numeric, errors="coerce").fillna(0).asty
 _, val_texts, _, val_labels = train_test_split(
     texts, labels, test_size=0.2, random_state=42
 )
+# MODEL_NAME=os.getenv("MODEL_NAME")
+# # Load model
+# MODEL_PATH = os.getenv("MODEL_PATH")
+MODEL_PATH = "saved_model_xlm-roberta-base"
+MODEL_NAME = "xlm-roberta-base"
+# Before saving plots
+os.makedirs(f"results/{MODEL_NAME}", exist_ok=True)
+tokenizer = XLMRobertaTokenizer.from_pretrained(MODEL_PATH)
 
-# Load model
-MODEL_PATH = "saved_model_multi_cased_L-12_H-768_A-12"
-tokenizer = BertTokenizer.from_pretrained(MODEL_PATH)
-model = BertForSequenceClassification.from_pretrained(MODEL_PATH)
+model = XLMRobertaForSequenceClassification.from_pretrained(MODEL_PATH)
 model.to(device)
 model.eval()
 
@@ -127,13 +133,13 @@ class_report_df = pd.DataFrame(class_report).transpose()
 os.makedirs("results", exist_ok=True)
 
 # Save metrics with UTF-8 encoding
-with open("results/evaluation_metrics.txt", "w", encoding="utf-8") as f:
+with open("results/"+MODEL_NAME+"/evaluation_metrics.txt", "w", encoding="utf-8") as f:
     f.write("📊 Evaluation Metrics on Validation Set:\n")
     for k, v in metrics.items():
         f.write(f"- {k}: {v:.4f}\n")
 
 # Save classification report
-class_report_df.to_csv("results/classification_report.csv")
+class_report_df.to_csv("results/"+MODEL_NAME+"/classification_report.csv")
 
 # ... [after saving metrics] ...
 
@@ -144,7 +150,7 @@ sns.barplot(x=emotion_labels, y=support.values)
 plt.title("Class Distribution in Validation Set")
 plt.xticks(rotation=90)
 plt.ylabel("Number of Samples")
-plt.savefig("results/class_distribution.png", bbox_inches='tight')
+plt.savefig("results/"+MODEL_NAME+"/class_distribution.png", bbox_inches='tight')
 plt.close()
 
 # 2. Plot performance metrics per emotion
@@ -157,7 +163,7 @@ plt.title("Performance Metrics per Emotion")
 plt.xticks(rotation=90)
 plt.ylabel("Score")
 plt.legend(loc="lower right")
-plt.savefig("results/per_emotion_metrics.png", bbox_inches='tight')
+plt.savefig("results/"+MODEL_NAME+"/per_emotion_metrics.png", bbox_inches='tight')
 plt.close()
 
 # 3. Plot confusion matrix for top emotions (simplified)
@@ -185,7 +191,7 @@ sns.heatmap(
 plt.title("Confusion Matrix (Top Emotions)")
 plt.xlabel("Predicted")
 plt.ylabel("True")
-plt.savefig("results/confusion_matrix_top.png", bbox_inches='tight')
+plt.savefig("results/"+MODEL_NAME+"/confusion_matrix_top.png", bbox_inches='tight')
 plt.close()
 
 # 4. Plot threshold analysis for a key emotion
@@ -205,11 +211,11 @@ plt.title(f"F1-Score vs Threshold for {emotion}")
 plt.xlabel("Threshold")
 plt.ylabel("F1-Score")
 plt.grid(True)
-plt.savefig(f"results/threshold_analysis_{emotion}.png", bbox_inches='tight')
+plt.savefig(f"results/"+MODEL_NAME+"/threshold_analysis_{emotion}.png", bbox_inches='tight')
 plt.close()
 
 print("\n📈 Generated visualizations:")
-print(f"- Class distribution: results/class_distribution.png")
-print(f"- Per-emotion metrics: results/per_emotion_metrics.png")
-print(f"- Confusion matrix (top emotions): results/confusion_matrix_top.png")
-print(f"- Threshold analysis: results/threshold_analysis_{emotion}.png")
+print(f"- Class distribution: results/"+MODEL_NAME+"/class_distribution.png")
+print(f"- Per-emotion metrics: results/"+MODEL_NAME+"/per_emotion_metrics.png")
+print(f"- Confusion matrix (top emotions): results/"+MODEL_NAME+"/confusion_matrix_top.png")
+print(f"- Threshold analysis: results/"+MODEL_NAME+"/threshold_analysis_{emotion}.png")
