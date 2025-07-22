@@ -12,6 +12,8 @@ from collections import Counter
 import re
 import warnings
 
+from predict_emo import OptimizedEmotionPredictor
+
 warnings.filterwarnings('ignore')
 
 

@@ -492,7 +492,7 @@ if __name__ == "__main__":
 
     # Test texts - mix of short and long
     test_texts = [
-        "2024 December Very old place we got their best room called sweet room But Ac machine was not adjustable Half of the place is surrounded by swamp land so bad odour and mosquitoesCant stay outside Not maintained when reserving room they said there is a restaurant but No restaurantThey were not willing to provide snacks or soft drink even we request provided dinner also in bad quality Even it is beach front the road leading to the beach is crowded with fishermen and drunkards Feel not safe",
+        # "2024 December Very old place we got their best room called sweet room But Ac machine was not adjustable Half of the place is surrounded by swamp land so bad odour and mosquitoesCant stay outside Not maintained when reserving room they said there is a restaurant but No restaurantThey were not willing to provide snacks or soft drink even we request provided dinner also in bad quality Even it is beach front the road leading to the beach is crowded with fishermen and drunkards Feel not safe",
         # "ethana maru thanak..",
         # "මම සතුටින් ඉන්නවා",
         # "EHA GEDARA BALLATA MEHA GEDARATA ENNA NA When the port city was being built SIGIRI GALA KADALA KALU GAL GANNA WEI In my POV we cannot expect any development from such narrow minded peeps",
@@ -500,6 +500,8 @@ if __name__ == "__main__":
         # "අම්මේ, අද රට කවා ",
         # "நான் இன்று ரொட்டி சாப்பிட்டேன்",
         # "epa kanna one"
+        "I AM HAPPY!",
+        "i am happy"
     ]
 
     print("=== ENHANCED EMOTION PREDICTION DEMO ===\n")
