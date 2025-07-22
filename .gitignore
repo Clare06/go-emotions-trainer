@@ -6,7 +6,7 @@ saved_model*/
 results_xlm_roberta*/
 emotion_model_20250722_050505/
 go-emotions-model/
-logs_*/
+*logs_*/
 results_20250722_050505/
 srilanka_emotion_model*/
 srilanka_results_*/
