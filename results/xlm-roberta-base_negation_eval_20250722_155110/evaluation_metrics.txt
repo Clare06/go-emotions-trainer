@@ -1,0 +1,32 @@
+📊 Enhanced Evaluation Metrics with Negation Handling
+============================================================
+
+🔍 Negation Detection Statistics:
+- Total samples: 15592
+- Negation detected: 3427 (22.0%)
+- Adjustments made: 119 (0.8%)
+
+📈 ORIGINAL MODEL METRICS:
+- F1 Micro: 0.4241
+- F1 Macro: 0.3342
+- Precision Micro: 0.5869
+- Recall Micro: 0.3320
+- Hamming Loss: 0.0402
+- Jaccard Micro: 0.2691
+- Subset Accuracy: 0.2898
+
+📈 NEGATION-AWARE METRICS:
+- F1 Micro: 0.4234
+- F1 Macro: 0.3336
+- Precision Micro: 0.5861
+- Recall Micro: 0.3313
+- Hamming Loss: 0.0403
+- Jaccard Micro: 0.2685
+- Subset Accuracy: 0.2893
+
+📊 IMPROVEMENT ANALYSIS:
+- F1 Micro: -0.17%
+- F1 Macro: -0.19%
+- Precision Micro: -0.13%
+- Recall Micro: -0.19%
+- Subset Accuracy: -0.20%

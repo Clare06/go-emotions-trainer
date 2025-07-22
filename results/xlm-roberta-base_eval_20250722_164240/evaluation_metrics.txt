@@ -1,0 +1,25 @@
+📊 Evaluation Results for xlm-roberta-base
+============================================================
+
+🎯 OVERALL METRICS:
+- F1 Micro: 0.4241
+- F1 Macro: 0.3342
+- F1 Weighted: 0.3910
+- Precision Micro: 0.5869
+- Precision Macro: 0.4893
+- Recall Micro: 0.3320
+- Recall Macro: 0.2797
+- Hamming Loss: 0.0402
+- Jaccard Micro: 0.2691
+- Jaccard Macro: 0.2204
+- Subset Accuracy: 0.2898
+
+📈 PER-CLASS SUMMARY:
+- Average F1-Score: 0.3342
+- Best performing emotion: gratitude (0.8277)
+- Worst performing emotion: grief (0.0000)
+
+🎛️ THRESHOLD OPTIMIZATION:
+- Emotions that benefit from threshold tuning: 26
+- Maximum improvement possible: inf%
+- Average improvement with optimal thresholds: inf%
