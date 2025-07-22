@@ -42,8 +42,7 @@ OPTIMAL_THRESHOLDS = {
     'relief': 0.4,
     'remorse': 0.4,
     'sadness': 0.3,
-    'surprise': 0.3,
-    'neutral': 0.1
+    'surprise': 0.3
 }
 
 emotion_labels = list(OPTIMAL_THRESHOLDS.keys())
@@ -493,15 +492,14 @@ if __name__ == "__main__":
 
     # Test texts - mix of short and long
     test_texts = [
-        "I'm not sad",
-        "This is really frustrating and disappointing.",
-        "I'm worried about the upcoming presentation.",
-        """I'm very disappointed with the Moratuwa Pizza Hut outlet. Most of the time, 
-        the pizzas barely have any cheese, which completely ruins the taste. The quality 
-        of the food is consistently poor, and it's definitely not what you'd expect from 
-        a brand like Pizza Hut. Honestly, this is the worst Pizza Hut outlet I've experienced. 
-        Really hope the management looks into this seriously and makes improvements.""",
-        "What an incredible surprise! I can't believe it happened!"
+        "இது மிகவும் அருமையான செய்தி",
+        "ethana maru thanak..",
+        "මම සතුටින් ඉන්නවා",
+        "EHA GEDARA BALLATA MEHA GEDARATA ENNA NA When the port city was being built SIGIRI GALA KADALA KALU GAL GANNA WEI In my POV we cannot expect any development from such narrow minded peeps",
+        "mama ada rata kawa",
+        "අම්මේ, අද රට කවා ",
+        "நான் இன்று ரொட்டி சாப்பிட்டேன்",
+        "epa kanna one"
     ]
 
     print("=== ENHANCED EMOTION PREDICTION DEMO ===\n")

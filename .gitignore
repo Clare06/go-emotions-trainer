@@ -8,6 +8,9 @@ emotion_model_20250722_050505/
 go-emotions-model/
 logs_*/
 results_20250722_050505/
+srilanka_emotion_model*/
+srilanka_results_*/
+
 
 
 # Ignore temporary files
