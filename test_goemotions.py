@@ -9,6 +9,7 @@ from deep_translator import GoogleTranslator
 
 import nltk
 from nltk.tokenize import sent_tokenize
+import re
 
 # Download tokenizer model (if not already)
 # nltk.download("punkt")
@@ -34,6 +35,25 @@ tokenizer = XLMRobertaTokenizer.from_pretrained(MODEL_PATH)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 model.eval()
+
+# import re
+#
+# def tag_negations(text):
+#     negation_words = ["not", "no", "never", "none", "n't"]
+#     tokens = text.split()
+#     result = []
+#     negate = False
+#     for token in tokens:
+#         if token.lower() in negation_words:
+#             negate = True
+#             result.append(token)
+#         elif negate:
+#             result.append("NOT_" + token)
+#             negate = False
+#         else:
+#             result.append(token)
+#     return " ".join(result)
+#
 
 def translate_tamil_to_english(text):
     try:
@@ -75,6 +95,101 @@ def predict_emotion(text):
     return probs
 
 # 🔹 Predict for full paragraph (auto split, print debug)
+# def predict_paragraph_emotions(paragraph):
+#     sentences = split_into_sentences(paragraph)
+#     all_probs = []
+#     token_counts = []
+#     max_token_length = 512
+#
+#     print(f"\n📘 Total Sentences Detected: {len(sentences)}")
+#
+#     # Visualize sentence impact weights
+#     total_tokens = sum(token_counts)
+#     print("\n📊 Sentence Impact Weights:")
+#     for i, count in enumerate(token_counts):
+#         weight_percent = count / total_tokens * 100
+#         print(f"  Sentence {i + 1}: {weight_percent:.1f}% of total tokens")
+#
+#     for i, sent in enumerate(sentences):
+#         tokens = tokenizer.tokenize(sent)
+#         token_count = min(len(tokens), max_token_length)
+#         token_counts.append(token_count)
+#
+#         probs = predict_emotion(sent)
+#         all_probs.append(probs)
+#
+#         top_indices = probs.argsort()[-3:][::-1]
+#         print(f"\n🔹 Sentence {i + 1} ({token_count} tokens): {sent}")
+#         for idx in top_indices:
+#             print(f"   - {emotion_labels[idx]} ({probs[idx] * 100:.1f}%)")
+#
+#     # Token-weighted aggregation
+#     total_tokens = sum(token_counts)
+#     weighted_probs = np.zeros(len(emotion_labels))
+#
+#     for i in range(len(all_probs)):
+#         weighted_probs += all_probs[i] * token_counts[i]
+#
+#     avg_probs = weighted_probs / total_tokens
+#
+#     print("\n🔻 Token-Weighted Emotion Prediction:")
+#     sorted_indices = np.argsort(avg_probs)[::-1]
+#     for idx in sorted_indices:
+#         if avg_probs[idx] > 0.01:
+#             print(f"   - {emotion_labels[idx]} ({avg_probs[idx] * 100:.1f}%)")
+#
+#     # Hybrid weighting: Optional but recommended
+#     hybrid_probs = np.zeros(len(emotion_labels))
+#     total_weight = 0
+#
+#     for i in range(len(all_probs)):
+#         intensity_factor = 1 + np.max(all_probs[i])
+#         weight = token_counts[i] * intensity_factor
+#         hybrid_probs += all_probs[i] * weight
+#         total_weight += weight
+#
+#     hybrid_probs /= total_weight
+#
+#     print("\n🔻 Hybrid Weighted Prediction (Tokens + Intensity):")
+#     sorted_hybrid = np.argsort(hybrid_probs)[::-1]
+#     for idx in sorted_hybrid:
+#         if hybrid_probs[idx] > 0.01:
+#             print(f"   - {emotion_labels[idx]} ({hybrid_probs[idx] * 100:.1f}%)")
+
+
+########################
+# Per-emotion best threshold values
+threshold_map = {
+    "admiration": 0.4,
+    "amusement": 0.4,
+    "anger": 0.3,
+    "annoyance": 0.2,
+    "approval": 0.2,
+    "caring": 0.2,
+    "confusion": 0.2,
+    "curiosity": 0.2,
+    "desire": 0.2,
+    "disappointment": 0.2,
+    "disapproval": 0.2,
+    "disgust": 0.3,
+    "embarrassment": 0.2,
+    "excitement": 0.2,
+    "fear": 0.3,
+    "gratitude": 0.4,
+    "grief": 0.3,
+    "joy": 0.3,
+    "love": 0.4,
+    "nervousness": 0.2,
+    "optimism": 0.3,
+    "pride": 0.2,
+    "realization": 0.2,
+    "relief": 0.1,
+    "remorse": 0.2,
+    "sadness": 0.3,
+    "surprise": 0.3,
+    "neutral": 0.2
+}
+
 def predict_paragraph_emotions(paragraph):
     sentences = split_into_sentences(paragraph)
     all_probs = []
@@ -82,13 +197,6 @@ def predict_paragraph_emotions(paragraph):
     max_token_length = 512
 
     print(f"\n📘 Total Sentences Detected: {len(sentences)}")
-
-    # Visualize sentence impact weights
-    total_tokens = sum(token_counts)
-    print("\n📊 Sentence Impact Weights:")
-    for i, count in enumerate(token_counts):
-        weight_percent = count / total_tokens * 100
-        print(f"  Sentence {i + 1}: {weight_percent:.1f}% of total tokens")
 
     for i, sent in enumerate(sentences):
         tokens = tokenizer.tokenize(sent)
@@ -103,7 +211,7 @@ def predict_paragraph_emotions(paragraph):
         for idx in top_indices:
             print(f"   - {emotion_labels[idx]} ({probs[idx] * 100:.1f}%)")
 
-    # Token-weighted aggregation
+    # Token-weighted average
     total_tokens = sum(token_counts)
     weighted_probs = np.zeros(len(emotion_labels))
 
@@ -118,7 +226,7 @@ def predict_paragraph_emotions(paragraph):
         if avg_probs[idx] > 0.01:
             print(f"   - {emotion_labels[idx]} ({avg_probs[idx] * 100:.1f}%)")
 
-    # Hybrid weighting: Optional but recommended
+    # Hybrid: tokens + intensity
     hybrid_probs = np.zeros(len(emotion_labels))
     total_weight = 0
 
@@ -136,7 +244,19 @@ def predict_paragraph_emotions(paragraph):
         if hybrid_probs[idx] > 0.01:
             print(f"   - {emotion_labels[idx]} ({hybrid_probs[idx] * 100:.1f}%)")
 
+    # 🔸 APPLY THRESHOLDS
+    print("\n✅ Final Filtered Emotions (Above Custom Thresholds):")
+    filtered_emotions = {}
 
+    for idx in sorted_hybrid:
+        emotion = emotion_labels[idx]
+        score = hybrid_probs[idx]
+        threshold = threshold_map.get(emotion, 0.5)
+        if score >= threshold:
+            print(f"   ✔ {emotion} ({score * 100:.1f}%) — above threshold {threshold:.2f}")
+            filtered_emotions[emotion] = round(score, 4)
+
+    return filtered_emotions
 
 
 # 🧪 Example input: long review (just copy-paste in one line!)
@@ -148,7 +268,7 @@ def predict_paragraph_emotions(paragraph):
 #     predict_paragraph_emotions(review)
 
 if __name__ == "__main__":
-    review = "I’m very disappointed with the Moratuwa Pizza Hut outlet. Most of the time, the pizzas barely have any cheese, which completely ruins the taste. The quality of the food is consistently poor, and it's definitely not what you'd expect from a brand like Pizza Hut. Honestly, this is the worst Pizza Hut outlet I’ve experienced. Really hope the management looks into this seriously and makes improvements.I’m very disappointed with the Moratuwa Pizza Hut outlet. Most of the time, the pizzas barely have any cheese, which completely ruins the taste. The quality of the food is consistently poor, and it's definitely not what you'd expect from a brand like Pizza Hut. Honestly, this is the worst Pizza Hut outlet I’ve experienced. Really hope the management looks into this seriously and makes improvements."
+    review = "I am not anger"
 
     # Translate Tamil → English
     # translated_review = translate_tamil_to_english(review)
@@ -156,7 +276,7 @@ if __name__ == "__main__":
 
     # Now predict using the translated English
     # predict_paragraph_emotions(translated_review)
-    # paragraph = "I felt energized within five minutes, but it lasted for about 45 minutes. I paid $3.99 for this drink. I could have just drunk a cup of coffee and saved my money."
-    # predict_paragraph_emotions(paragraph)
+    paragraph = "I felt energized within five minutes, but it lasted for about 45 minutes. I paid $3.99 for this drink. I could have just drunk a cup of coffee and saved my money."
     predict_paragraph_emotions(review)
+    # predict_paragraph_emotions(paragraph)
     # print(predict_emotion(review))

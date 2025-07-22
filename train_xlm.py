@@ -14,7 +14,8 @@ df1 = pd.read_csv("dataset/goemotions_1.csv")
 df2 = pd.read_csv("dataset/goemotions_2.csv")
 df3 = pd.read_csv("dataset/goemotions_3.csv")
 
-df = pd.concat([df1, df2, df3], ignore_index=True)
+# df = pd.concat([df1, df2, df3], ignore_index=True)
+df = pd.read_csv("dataset/goemotions_filtered.csv")
 
 emotion_labels = [
     'admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring',
@@ -84,7 +85,7 @@ def compute_metrics(p):
 # Training arguments
 training_args = TrainingArguments(
     output_dir="./results_xlm_roberta",
-    num_train_epochs=5,
+    num_train_epochs=3,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=16,
     save_strategy="epoch",

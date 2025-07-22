@@ -3,7 +3,11 @@ results/checkpoint*/
 venv/
 __pycache__/
 saved_model*/
-results_xlm_roberta/
+results_xlm_roberta*/
+emotion_model_20250722_050505/
+go-emotions-model/
+logs_*/
+results_20250722_050505/
 
 
 # Ignore temporary files

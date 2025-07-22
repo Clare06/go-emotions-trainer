@@ -2,7 +2,7 @@
 import pandas as pd
 import torch
 import numpy as np
-# from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizer, BertForSequenceClassification
 from transformers import XLMRobertaTokenizer, XLMRobertaForSequenceClassification
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, hamming_loss, jaccard_score, \
@@ -12,6 +12,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
+from datetime import datetime
 
 # Device configuration
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -45,7 +46,10 @@ _, val_texts, _, val_labels = train_test_split(
 MODEL_PATH = "saved_model_xlm-roberta-base"
 MODEL_NAME = "xlm-roberta-base"
 # Before saving plots
-os.makedirs(f"results/{MODEL_NAME}", exist_ok=True)
+# New timestamped results directory
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+output_dir = f"results/{MODEL_NAME}_{timestamp}"
+os.makedirs(output_dir, exist_ok=True)
 tokenizer = XLMRobertaTokenizer.from_pretrained(MODEL_PATH)
 
 model = XLMRobertaForSequenceClassification.from_pretrained(MODEL_PATH)
@@ -195,27 +199,70 @@ plt.savefig("results/"+MODEL_NAME+"/confusion_matrix_top.png", bbox_inches='tigh
 plt.close()
 
 # 4. Plot threshold analysis for a key emotion
-emotion = "grief"
-idx = emotion_labels.index(emotion)
+# emotion = "grief"
+# idx = emotion_labels.index(emotion)
+#
+# thresholds = np.linspace(0.1, 0.9, 9)
+# f1_scores = []
+# for thresh in thresholds:
+#     preds_thresh = (all_probs[:, idx] > thresh).astype(int)
+#     f1 = f1_score(true_labels[:, idx], preds_thresh, zero_division=0)
+#     f1_scores.append(f1)
+#
+# plt.figure(figsize=(10, 6))
+# plt.plot(thresholds, f1_scores, marker='o')
+# plt.title(f"F1-Score vs Threshold for {emotion}")
+# plt.xlabel("Threshold")
+# plt.ylabel("F1-Score")
+# plt.grid(True)
+# plt.savefig(f"results/"+MODEL_NAME+"/threshold_analysis_{emotion}.png", bbox_inches='tight')
+# plt.close()
+#
+# print("\n📈 Generated visualizations:")
+# print(f"- Class distribution: results/"+MODEL_NAME+"/class_distribution.png")
+# print(f"- Per-emotion metrics: results/"+MODEL_NAME+"/per_emotion_metrics.png")
+# print(f"- Confusion matrix (top emotions): results/"+MODEL_NAME+"/confusion_matrix_top.png")
+# print(f"- Threshold analysis: results/"+MODEL_NAME+"/threshold_analysis_{emotion}.png")
 
+for file in ["class_distribution.png", "per_emotion_metrics.png", "confusion_matrix_top.png"]:
+    if os.path.exists(f"results/{MODEL_NAME}/{file}"):
+        os.rename(f"results/{MODEL_NAME}/{file}", f"{output_dir}/{file}")
+
+# Run threshold analysis for ALL emotions
 thresholds = np.linspace(0.1, 0.9, 9)
-f1_scores = []
-for thresh in thresholds:
-    preds_thresh = (all_probs[:, idx] > thresh).astype(int)
-    f1 = f1_score(true_labels[:, idx], preds_thresh, zero_division=0)
-    f1_scores.append(f1)
+best_thresholds = []
 
-plt.figure(figsize=(10, 6))
-plt.plot(thresholds, f1_scores, marker='o')
-plt.title(f"F1-Score vs Threshold for {emotion}")
-plt.xlabel("Threshold")
-plt.ylabel("F1-Score")
-plt.grid(True)
-plt.savefig(f"results/"+MODEL_NAME+"/threshold_analysis_{emotion}.png", bbox_inches='tight')
-plt.close()
+for emotion in emotion_labels:
+    idx = emotion_labels.index(emotion)
+    f1_scores = []
 
-print("\n📈 Generated visualizations:")
-print(f"- Class distribution: results/"+MODEL_NAME+"/class_distribution.png")
-print(f"- Per-emotion metrics: results/"+MODEL_NAME+"/per_emotion_metrics.png")
-print(f"- Confusion matrix (top emotions): results/"+MODEL_NAME+"/confusion_matrix_top.png")
-print(f"- Threshold analysis: results/"+MODEL_NAME+"/threshold_analysis_{emotion}.png")
+    for thresh in thresholds:
+        preds_thresh = (all_probs[:, idx] > thresh).astype(int)
+        f1 = f1_score(true_labels[:, idx], preds_thresh, zero_division=0)
+        f1_scores.append(f1)
+
+    best_idx = int(np.argmax(f1_scores))
+    best_thresh = thresholds[best_idx]
+    best_f1 = f1_scores[best_idx]
+
+    best_thresholds.append({
+        "emotion": emotion,
+        "best_threshold": best_thresh,
+        "best_f1": best_f1
+    })
+
+    # Save plot for each emotion
+    plt.figure(figsize=(8, 5))
+    plt.plot(thresholds, f1_scores, marker='o', color='teal')
+    plt.title(f"F1-Score vs Threshold for '{emotion}'")
+    plt.xlabel("Threshold")
+    plt.ylabel("F1-Score")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/threshold_analysis_{emotion}.png")
+    plt.close()
+
+# Save CSV summary
+pd.DataFrame(best_thresholds).to_csv(f"{output_dir}/best_thresholds.csv", index=False)
+
+print(f"\n✅ Threshold plots and best values saved in: {output_dir}")

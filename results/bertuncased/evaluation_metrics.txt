@@ -1,0 +1,8 @@
+📊 Evaluation Metrics on Validation Set:
+- f1_micro: 0.2095
+- f1_macro: 0.1785
+- precision_micro: 0.1186
+- recall_micro: 0.8968
+- hamming_loss: 0.2851
+- jaccard_micro: 0.1170
+- subset_accuracy: 0.0000
