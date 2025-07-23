@@ -17,14 +17,18 @@ from predict_emo import OptimizedEmotionPredictor
 warnings.filterwarnings('ignore')
 
 
+# Your existing code imports and configurations remain the same...
+
 class AdvancedReviewAggregator(OptimizedEmotionPredictor):
     """
     Advanced Review Sentiment Aggregator with Statistical Weighting
 
     Key Features:
-    - Token-based quality weighting (not word count)
+    - Paragraph-level reviews get higher weight (richer context)
+    - One-word/low-effort reviews get penalized
     - Emotion intensity scoring within positive/negative categories
-    - Improved outlier detection focusing on quality/confidence
+    - Outlier detection and handling
+    - Statistical confidence scoring
     - Returns normalized sentiment score (-1 to +1)
     """
 
@@ -68,82 +72,90 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
         }
 
         # Review quality factors
-        self.MIN_MEANINGFUL_LENGTH = 5  # tokens
-        self.PARAGRAPH_THRESHOLD = 20  # tokens for paragraph weight
+        self.MIN_MEANINGFUL_LENGTH = 5  # words
+        self.PARAGRAPH_THRESHOLD = 20  # words for paragraph weight
         self.MAX_REVIEW_WEIGHT = 5.0  # Cap for very long reviews
         self.MIN_REVIEW_WEIGHT = 0.1  # Floor for very short reviews
 
-    def calculate_review_quality_weight_improved(self, review_text, emotion_count, processing_method):
+    def calculate_review_quality_weight(self, review_text, emotion_count, processing_method):
         """
-        Improved quality weighting using actual tokenizer and removing unnecessary penalties
+        Calculate quality weight for a review based on multiple factors
 
         Args:
             review_text (str): Original review text
             emotion_count (int): Number of emotions detected
-            processing_method (str): Processing method used
+            processing_method (str): 'paragraph_weighted' or 'single_text'
 
         Returns:
-            dict: Quality weight information
+            float: Quality weight (0.1 to 5.0)
         """
-        # Get actual meaningful tokens (what the model actually processes)
-        tokens = self.tokenizer.tokenize(review_text)
-        meaningful_tokens = [t for t in tokens if
-                             not t.startswith('##') and t not in ['[CLS]', '[SEP]', '<pad>', '<s>', '</s>']]
-        token_count = len(meaningful_tokens)
+        word_count = len(review_text.split())
+        char_count = len(review_text.strip())
+        sentence_count = len(sent_tokenize(review_text))
 
-        # Sentence structure analysis
-        sentences = sent_tokenize(review_text)
-        sentence_count = len(sentences)
-
-        # Base weight using meaningful tokens (not raw word count)
-        if token_count <= 2:
-            quality_weight = 0.15
-            quality_reason = "Very short review (1-2 tokens)"
-        elif token_count <= 5:
-            quality_weight = 0.4
-            quality_reason = "Short review (3-5 tokens)"
-        elif token_count <= 10:
-            quality_weight = 0.7
-            quality_reason = "Brief review (6-10 tokens)"
-        elif token_count <= self.PARAGRAPH_THRESHOLD:
+        # Base weight calculation
+        if word_count <= 2:
+            # One-word or two-word reviews (very low quality)
+            quality_weight = 0.1
+            quality_reason = "Very short review (1-2 words)"
+        elif word_count <= 5:
+            # Short reviews (low quality)
+            quality_weight = 0.3
+            quality_reason = "Short review (3-5 words)"
+        elif word_count <= 10:
+            # Brief reviews (below average quality)
+            quality_weight = 0.6
+            quality_reason = "Brief review (6-10 words)"
+        elif word_count <= self.PARAGRAPH_THRESHOLD:
+            # Standard reviews (average quality)
             quality_weight = 1.0
             quality_reason = "Standard review"
         else:
-            # Logarithmic scaling for longer reviews
-            quality_weight = min(1.5 + np.log10(token_count / self.PARAGRAPH_THRESHOLD), self.MAX_REVIEW_WEIGHT)
-            quality_reason = f"Detailed review ({token_count} tokens)"
+            # Paragraph reviews (high quality) - logarithmic scaling
+            quality_weight = min(1.5 + np.log10(word_count / self.PARAGRAPH_THRESHOLD), self.MAX_REVIEW_WEIGHT)
+            quality_reason = f"Detailed review ({word_count} words)"
 
+        # Bonus factors
         bonuses = []
-        penalties = []
 
-        # Emotion diversity bonus (indicates thoughtful review)
+        # Emotion diversity bonus (more emotions = richer review)
         if emotion_count >= 3:
-            emotion_bonus = min(0.3, emotion_count * 0.08)
+            emotion_bonus = min(0.3, emotion_count * 0.1)
             quality_weight += emotion_bonus
             bonuses.append(f"Emotion diversity (+{emotion_bonus:.2f})")
 
-        # Multi-sentence structure bonus
+        # Sentence structure bonus
         if sentence_count >= 2:
-            structure_bonus = min(0.25, sentence_count * 0.08)
+            structure_bonus = min(0.2, sentence_count * 0.1)
             quality_weight += structure_bonus
             bonuses.append(f"Multi-sentence (+{structure_bonus:.2f})")
 
-        # Processing method bonus (paragraph analysis is more thorough)
+        # Paragraph processing bonus
         if processing_method == 'paragraph_weighted':
-            paragraph_bonus = 0.4
+            paragraph_bonus = 0.5
             quality_weight += paragraph_bonus
             bonuses.append(f"Paragraph analysis (+{paragraph_bonus:.2f})")
 
-        # Only keep extreme repetition penalty (like "good good good good good")
-        words = review_text.lower().split()
-        if len(words) > 3:
-            unique_ratio = len(set(words)) / len(words)
-            if unique_ratio < 0.3:  # More than 70% repetitive
-                repetition_penalty = -0.4
-                quality_weight += repetition_penalty
-                penalties.append(f"Extreme repetition (-{abs(repetition_penalty):.2f})")
+        # Penalties
+        penalties = []
 
-        # Bounds
+        # Repetitive text penalty (this one is still valid)
+        words = review_text.lower().split()
+        if len(words) > 1:
+            unique_ratio = len(set(words)) / len(words)
+            if unique_ratio < 0.5:  # More than 50% repetitive
+                repetition_penalty = -0.2  # Reduced penalty
+                quality_weight += repetition_penalty
+                penalties.append(f"Repetitive (-{abs(repetition_penalty):.2f})")
+
+        # Caps intensity detection (informational only)
+        # XLM-RoBERTa handles caps naturally - they often indicate stronger emotions
+        has_caps = review_text.isupper() and len(review_text) > 10
+        caps_info = "High intensity (caps)" if has_caps else "Normal case"
+
+        # Trust the model's emotion detection for caps intensity
+
+        # Ensure within bounds
         quality_weight = max(self.MIN_REVIEW_WEIGHT, min(quality_weight, self.MAX_REVIEW_WEIGHT))
 
         return {
@@ -151,8 +163,7 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
             'base_reason': quality_reason,
             'bonuses': bonuses,
             'penalties': penalties,
-            'token_count': token_count,
-            'meaningful_tokens': meaningful_tokens[:10],  # Show first 10 for debugging
+            'word_count': word_count,
             'sentence_count': sentence_count
         }
 
@@ -219,64 +230,9 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
             }
         }
 
-    def improved_outlier_detection(self, reviews_data, method='confidence_based'):
-        """
-        Better outlier detection focusing on review quality, not just sentiment extremes
-
-        Args:
-            reviews_data (list): List of individual review results
-            method (str): Detection method ('confidence_based' or 'quality_based')
-
-        Returns:
-            dict: Outlier analysis results
-        """
-        if len(reviews_data) < 4:
-            return {
-                'outlier_indices': [],
-                'method': 'insufficient_data',
-                'total_reviews': len(reviews_data),
-                'outliers_detected': 0
-            }
-
-        outlier_indices = []
-
-        if method == 'confidence_based':
-            # Focus on reviews with suspiciously low model confidence
-            confidences = []
-            for i, review_data in enumerate(reviews_data):
-                # Calculate average confidence across predicted emotions
-                emotions = review_data.get('sentiment_analysis', {}).get('emotion_breakdown', {})
-                if emotions:
-                    avg_confidence = np.mean([data['confidence'] for data in emotions.values()])
-                    confidences.append((i, avg_confidence))
-                else:
-                    confidences.append((i, 0.0))
-
-            # Mark reviews with very low confidence as potential outliers
-            confidence_scores = [conf for _, conf in confidences]
-            if len(confidence_scores) > 1:
-                threshold = np.percentile(confidence_scores, 10)  # Bottom 10%
-                outlier_indices = [i for i, conf in confidences if conf < threshold and conf < 0.3]
-
-        elif method == 'quality_based':
-            # Focus on reviews with very low quality weights
-            quality_weights = [review.get('quality_weight_info', {}).get('weight', 1.0)
-                               for review in reviews_data]
-            threshold = np.percentile(quality_weights, 5)  # Bottom 5%
-            outlier_indices = [i for i, weight in enumerate(quality_weights)
-                               if weight < threshold and weight < 0.2]
-
-        return {
-            'outlier_indices': outlier_indices,
-            'method': method,
-            'total_reviews': len(reviews_data),
-            'outliers_detected': len(outlier_indices),
-            'outlier_percentage': round(len(outlier_indices) / len(reviews_data) * 100, 2) if reviews_data else 0
-        }
-
     def detect_outlier_reviews(self, review_scores, method='iqr', threshold=1.5):
         """
-        Detect outlier reviews using statistical methods (fallback method)
+        Detect outlier reviews using statistical methods
 
         Args:
             review_scores (list): List of sentiment scores
@@ -288,7 +244,7 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
         """
         scores_array = np.array(review_scores)
 
-        if len(scores_array) < 4:
+        if len(scores_array) < 4:  # Need minimum reviews for outlier detection
             return {
                 'outlier_indices': [],
                 'method': 'insufficient_data',
@@ -370,6 +326,11 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
                 else:
                     processing_stats['single_text_mode'] += 1
 
+                # Calculate quality weight for this review
+                quality_info = self.calculate_review_quality_weight(
+                    review, result['emotion_count'], result.get('processing_method', 'single_text')
+                )
+
                 # Get emotions (handle both single text and paragraph results)
                 if 'filtered_emotions' in result:
                     # Paragraph mode
@@ -382,13 +343,6 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
                                 if scores.get('predicted', False)}
                     emotion_confidence = {e: scores['probability']
                                           for e, scores in result.get('detailed_scores', {}).items()}
-
-                # Calculate quality weight for this review - FIXED METHOD NAME AND PARAMETERS
-                quality_info = self.calculate_review_quality_weight_improved(
-                    review,
-                    result['emotion_count'],
-                    result.get('processing_method', 'single_text')
-                )
 
                 # Calculate weighted sentiment score
                 sentiment_analysis = self.calculate_weighted_sentiment_score(emotions, emotion_confidence)
@@ -430,8 +384,7 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
         final_quality_weights = all_quality_weights.copy()
 
         if outlier_detection and len(all_sentiment_scores) >= 4:
-            # Use improved outlier detection method
-            outlier_info = self.improved_outlier_detection(individual_results, method='confidence_based')
+            outlier_info = self.detect_outlier_reviews(all_sentiment_scores)
 
             if outlier_info['outliers_detected'] > 0:
                 print(f"🚨 Detected {outlier_info['outliers_detected']} outlier reviews")
@@ -558,18 +511,21 @@ if __name__ == "__main__":
         "2024 December Very old place we got their best room called sweet room But Ac machine was not adjustable Half of the place is surrounded by swamp land so bad odour and mosquitoes Can't stay outside Not maintained when reserving room they said there is a restaurant but No restaurant They were not willing to provide snacks or soft drink even we request provided dinner also in bad quality Even it is beach front the road leading to the beach is crowded with fishermen and drunkards Feel not safe",
         "Great!",  # One word - should get low weight
         "Amazing food and service, really enjoyed our time here. The staff was friendly and the ambiance was perfect for a romantic dinner.",
+        # Good quality review
         "ok",  # One word - very low weight
         "Terrible experience. Food was cold, service was slow, and the place was dirty. Would never recommend this to anyone. The manager was rude and didn't care about our complaints. Worst restaurant ever!",
+        # Negative detailed review
         "Good good good good good",  # Repetitive - should get penalized
-        "ABSOLUTELY AMAZING BEST PLACE EVER!!!",  # No caps penalty now
+        "ABSOLUTELY AMAZING BEST PLACE EVER!!!",  # All caps - penalty
         "The restaurant has excellent food quality, great ambiance, and outstanding service. We ordered the seafood platter and it was fresh and delicious. The staff was attentive and made sure we had everything we needed. Highly recommend for special occasions."
+        # High quality paragraph
     ]
 
     print("🚀 TESTING ADVANCED REVIEW AGGREGATOR")
     print("=" * 60)
 
     results = analyze_restaurant_reviews(test_reviews)
-    print(results['final_sentiment_score'])
+
     if 'error' not in results:
         print(f"\n🎯 FINAL RESULT:")
         print(

@@ -500,8 +500,7 @@ if __name__ == "__main__":
         # "අම්මේ, අද රට කවා ",
         # "நான் இன்று ரொட்டி சாப்பிட்டேன்",
         # "epa kanna one"
-        "I AM HAPPY!",
-        "i am happy"
+        "I am going to hostel after a long holiday at home with my parents, sad",
     ]
 
     print("=== ENHANCED EMOTION PREDICTION DEMO ===\n")
