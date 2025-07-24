@@ -229,7 +229,7 @@ def main():
         'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval',
         'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief',
         'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization',
-        'relief', 'remorse', 'sadness', 'surprise', 'neutral'
+        'relief', 'remorse', 'sadness', 'surprise'
     ]
 
     test_texts = test_df["text"].tolist()

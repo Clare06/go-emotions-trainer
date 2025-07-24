@@ -1,0 +1,35 @@
+🎯 SARCASM DETECTION MODEL EVALUATION SUMMARY
+==================================================
+
+📊 OVERALL PERFORMANCE:
+Accuracy: 0.8125
+F1-Score (Macro): 0.8086
+F1-Score (Weighted): 0.8112
+Precision (Macro): 0.8149
+Recall (Macro): 0.8062
+ROC-AUC: 0.8690
+Average Precision: 0.8652
+
+📋 PER-CLASS PERFORMANCE:
+Non-Sarcastic:
+  Precision: 0.8273
+  Recall: 0.7398
+  F1-Score: 0.7811
+Sarcastic:
+  Precision: 0.8025
+  Recall: 0.8725
+  F1-Score: 0.8360
+
+🎯 CONFUSION MATRIX:
+[[ 91  32]
+ [ 19 130]]
+
+📈 DETAILED CLASSIFICATION REPORT:
+               precision    recall  f1-score   support
+
+Non-Sarcastic       0.83      0.74      0.78       123
+    Sarcastic       0.80      0.87      0.84       149
+
+     accuracy                           0.81       272
+    macro avg       0.81      0.81      0.81       272
+ weighted avg       0.81      0.81      0.81       272

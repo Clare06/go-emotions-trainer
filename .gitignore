@@ -10,8 +10,9 @@ go-emotions-model/
 results_20250722_050505/
 srilanka_emotion_model*/
 srilanka_results_*/
-
-
+sarcasm_training_results_*/
+sarcasm_emotion_features_split/
+sarcasm_imbalance_fixed_*/
 
 # Ignore temporary files
 *.log
