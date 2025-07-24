@@ -82,8 +82,8 @@ def compute_metrics(p):
     return multi_label_metrics(preds, p.label_ids)
 
 # Load datasets
-train_df = pd.read_csv('dataset/goemotions_train.csv')
-val_df = pd.read_csv('dataset/goemotions_val.csv')
+train_df = pd.read_csv('../dataset/goemotions_train.csv')
+val_df = pd.read_csv('../dataset/goemotions_val.csv')
 
 # Initialize tokenizer
 tokenizer = XLMRobertaTokenizer.from_pretrained(MODEL_NAME)

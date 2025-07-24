@@ -89,7 +89,7 @@ def gradual_unfreezing_fine_tune(original_model_path, negation_csv_path):
 
     # Very conservative training args for small dataset
     training_args_conservative = TrainingArguments(
-        output_dir="./results_xlm_roberta_negation_conservative",
+        output_dir="../results_xlm_roberta_negation_conservative",
         num_train_epochs=2,  # Very few epochs
         per_device_train_batch_size=4,  # Small batch size
         per_device_eval_batch_size=4,
@@ -303,7 +303,7 @@ def data_augmentation_for_negation(original_csv_path):
     combined_df = pd.concat([df, augmented_df], ignore_index=True)
 
     # Save augmented dataset
-    augmented_path = "negation_training_data_augmented.csv"
+    augmented_path = "../negation_training_data_augmented.csv"
     combined_df.to_csv(augmented_path, index=False)
 
     print(f"✅ Dataset augmented from {len(df)} to {len(combined_df)} examples")
@@ -315,8 +315,8 @@ def data_augmentation_for_negation(original_csv_path):
 # Main execution with protection strategies
 if __name__ == "__main__":
 
-    ORIGINAL_MODEL_PATH = "emotion_model_20250722_050505"
-    NEGATION_CSV_PATH = "negation_training_data.csv"
+    ORIGINAL_MODEL_PATH = "../emotion_model_20250722_050505"
+    NEGATION_CSV_PATH = "../negation_training_data.csv"
 
     if not os.path.exists(ORIGINAL_MODEL_PATH):
         print(f"❌ Original model not found at: {ORIGINAL_MODEL_PATH}")

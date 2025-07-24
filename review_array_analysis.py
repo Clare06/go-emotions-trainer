@@ -527,7 +527,7 @@ class AdvancedReviewAggregator(OptimizedEmotionPredictor):
 
 
 # Example usage function
-def analyze_restaurant_reviews(reviews_list):
+def analyze_array_reviews(reviews_list):
     """
     Convenience function to analyze restaurant/place reviews
 
@@ -568,7 +568,7 @@ if __name__ == "__main__":
     print("🚀 TESTING ADVANCED REVIEW AGGREGATOR")
     print("=" * 60)
 
-    results = analyze_restaurant_reviews(test_reviews)
+    results = analyze_array_reviews(test_reviews)
     print(results['final_sentiment_score'])
     if 'error' not in results:
         print(f"\n🎯 FINAL RESULT:")

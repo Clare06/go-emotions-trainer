@@ -13,7 +13,7 @@ from nlpaug.augmenter.word import SynonymAug, ContextualWordEmbsAug
 warnings.filterwarnings('ignore')
 
 # Configuration
-PRETRAINED_MODEL_PATH = "saved_model_xlm_roberta_negation_head_only_20250722_151517"  # Replace with your trained model path
+PRETRAINED_MODEL_PATH = "../saved_model_xlm_roberta_negation_head_only_20250722_151517"  # Replace with your trained model path
 BATCH_SIZE = 16  # Smaller for limited GPU memory
 MAX_LENGTH = 128
 EMOTIONS = [
@@ -122,7 +122,7 @@ def compute_metrics(p):
 
 # Load Sri Lankan dataset
 print("Loading Sri Lankan emotion dataset...")
-srilanka_df = pd.read_csv('dataset/cleaned_emotion_data_ef.csv')
+srilanka_df = pd.read_csv('../dataset/cleaned_emotion_data_ef.csv')
 
 # Ensure we have the required emotion columns (excluding neutral)
 available_emotions = [col for col in EMOTIONS if col in srilanka_df.columns]

@@ -93,7 +93,7 @@ def main():
 
     # Training arguments
     training_args = TrainingArguments(
-        output_dir="./results",
+        output_dir="../results",
         learning_rate=2e-5,
         per_device_train_batch_size=8,  # Reduced batch size for stability
         per_device_eval_batch_size=8,
@@ -216,7 +216,7 @@ if __name__ == "__main__":
             print("  python main.py predict 'text' - Predict single text")
     else:
         # Default to interactive testing if model exists, otherwise train
-        if os.path.exists("./go-emotions-model"):
+        if os.path.exists("../go-emotions-model"):
             print("Model found! Starting interactive test mode...")
             interactive_test()
         else:
