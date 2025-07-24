@@ -432,6 +432,11 @@ class OptimizedEmotionPredictor:
 
             return result
 
+def get_emotion_prediction(text):
+    """Simple wrapper function for compatibility"""
+    predictor = OptimizedEmotionPredictor()
+    probabilities = predictor.predict_sentence_emotion(text)
+    return probabilities
 
 def compare_thresholds(text, predictor):
     """
