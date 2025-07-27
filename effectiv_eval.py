@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 from dotenv import load_dotenv
+import json
 
 # Load environment variables
 load_dotenv()
@@ -22,13 +23,13 @@ load_dotenv()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# Emotion labels
+# Emotion labels (27 emotions, no neutral)
 emotion_labels = [
     'admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring',
     'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval',
     'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief',
     'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization',
-    'relief', 'remorse', 'sadness', 'surprise', 'neutral'
+    'relief', 'remorse', 'sadness', 'surprise'
 ]
 
 
@@ -188,58 +189,136 @@ def generate_classification_report(true_labels, predictions):
 
 
 def create_visualizations(class_report_df, output_dir):
-    """Create comprehensive visualizations"""
+    """Create comprehensive visualizations for 27 emotions"""
 
-    # 1. Class distribution plot
-    plt.figure(figsize=(15, 8))
+    print(f"📊 Creating visualizations for {len(emotion_labels)} emotions...")
+
+    # 1. Overall Performance Metrics
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+
+    # Precision, Recall, F1-Score comparison
+    metrics = ['precision', 'recall', 'f1-score']
+    overall_scores = [class_report_df.loc['weighted avg', metric] for metric in metrics]
+
+    bars = ax1.bar(metrics, overall_scores, color=['skyblue', 'lightgreen', 'orange'])
+    ax1.set_title('Overall Performance Metrics', fontsize=14, fontweight='bold')
+    ax1.set_ylabel('Score', fontsize=12)
+    ax1.set_ylim(0, 1)
+
+    for bar, score in zip(bars, overall_scores):
+        ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                 f'{score:.3f}', ha='center', fontweight='bold')
+
+    # Support distribution
+    support_values = class_report_df.loc[emotion_labels, 'support'].values
+    top_10_emotions = class_report_df.loc[emotion_labels].nlargest(10, 'support').index
+
+    ax2.bar(range(len(top_10_emotions)),
+            class_report_df.loc[top_10_emotions, 'support'].values,
+            color='lightcoral')
+    ax2.set_title('Top 10 Emotions by Sample Count', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Emotions', fontsize=12)
+    ax2.set_ylabel('Sample Count', fontsize=12)
+    ax2.set_xticks(range(len(top_10_emotions)))
+    ax2.set_xticklabels(top_10_emotions, rotation=45, ha='right')
+
+    # Best and Worst F1-Scores
+    sorted_emotions = class_report_df.loc[emotion_labels].sort_values('f1-score', ascending=False)
+
+    # Top 10 best
+    best_10 = sorted_emotions.head(10)
+    ax3.barh(range(len(best_10)), best_10['f1-score'].values, color='lightgreen')
+    ax3.set_title('Top 10 Best F1-Scores', fontsize=14, fontweight='bold')
+    ax3.set_xlabel('F1-Score', fontsize=12)
+    ax3.set_yticks(range(len(best_10)))
+    ax3.set_yticklabels(best_10.index)
+    ax3.set_xlim(0, 1)
+
+    # Worst 10
+    worst_10 = sorted_emotions.tail(10)
+    ax4.barh(range(len(worst_10)), worst_10['f1-score'].values, color='lightcoral')
+    ax4.set_title('Bottom 10 F1-Scores', fontsize=14, fontweight='bold')
+    ax4.set_xlabel('F1-Score', fontsize=12)
+    ax4.set_yticks(range(len(worst_10)))
+    ax4.set_yticklabels(worst_10.index)
+    ax4.set_xlim(0, 1)
+
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/overall_performance.png", dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # 2. Class distribution
+    plt.figure(figsize=(20, 6))
     support = class_report_df.loc[emotion_labels, "support"].astype(int)
-    sns.barplot(x=emotion_labels, y=support.values)
-    plt.title("Class Distribution in Test Set", fontsize=16)
-    plt.xticks(rotation=90)
+    bars = plt.bar(emotion_labels, support.values, color='skyblue')
+    plt.title("Class Distribution in Test Set", fontsize=16, fontweight='bold')
+    plt.xticks(rotation=45, ha='right')
     plt.ylabel("Number of Samples")
+
+    # Add value labels on bars
+    for bar, value in zip(bars, support.values):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1,
+                 str(value), ha='center', fontweight='bold')
+
     plt.tight_layout()
     plt.savefig(f"{output_dir}/class_distribution.png", dpi=300, bbox_inches='tight')
     plt.close()
 
-    # 2. Performance metrics per emotion
+    # 3. Performance metrics per emotion
     metrics_df = class_report_df.loc[emotion_labels, ["precision", "recall", "f1-score"]]
     metrics_df = metrics_df.reset_index().melt(id_vars="index", var_name="metric")
 
-    plt.figure(figsize=(18, 10))
+    plt.figure(figsize=(20, 8))
     sns.barplot(data=metrics_df, x="index", y="value", hue="metric")
-    plt.title("Performance Metrics per Emotion", fontsize=16)
-    plt.xticks(rotation=90)
+    plt.title("Performance Metrics per Emotion", fontsize=16, fontweight='bold')
+    plt.xticks(rotation=45, ha='right')
     plt.ylabel("Score")
     plt.legend(loc="lower right")
     plt.tight_layout()
     plt.savefig(f"{output_dir}/per_emotion_metrics.png", dpi=300, bbox_inches='tight')
     plt.close()
 
-    # 3. F1-Score heatmap
-    f1_scores = class_report_df.loc[emotion_labels, "f1-score"].values.reshape(4, 7)  # 4x7 grid
+    # 4. F1-Score heatmap (3x9 grid for 27 emotions)
+    f1_scores = class_report_df.loc[emotion_labels, "f1-score"].values.reshape(3, 9)
+    emotion_grid = np.array(emotion_labels).reshape(3, 9)
 
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(
+    plt.figure(figsize=(18, 8))
+    ax = sns.heatmap(
         f1_scores,
         annot=True,
         fmt='.3f',
-        cmap='RdYlBu_r',
-        xticklabels=emotion_labels[:7],
-        yticklabels=[emotion_labels[i:i + 7] for i in range(0, len(emotion_labels), 7)],
-        cbar_kws={'label': 'F1-Score'}
+        cmap='RdYlGn',
+        cbar_kws={'label': 'F1-Score'},
+        square=False
     )
-    plt.title("F1-Score Heatmap by Emotion")
+
+    # Add emotion labels
+    for i in range(3):
+        for j in range(9):
+            ax.text(j + 0.5, i + 0.7, emotion_grid[i, j],
+                    ha='center', va='center', fontsize=8, fontweight='bold')
+
+    plt.title("F1-Score Heatmap by Emotion (3x9 Grid)", fontsize=16, fontweight='bold')
+    plt.xlabel("")
+    plt.ylabel("")
+    plt.xticks([])
+    plt.yticks([])
     plt.tight_layout()
     plt.savefig(f"{output_dir}/f1_heatmap.png", dpi=300, bbox_inches='tight')
     plt.close()
 
+    print(f"✅ All visualizations saved to {output_dir}")
+
 
 def run_threshold_analysis(all_probs, true_labels, output_dir):
-    """Run threshold analysis for each emotion"""
-    thresholds = np.linspace(0.1, 0.9, 9)
-    best_thresholds = []
+    """Run comprehensive threshold analysis for each emotion"""
+    print("🎯 Running threshold optimization analysis...")
 
-    print("Running threshold analysis...")
+    thresholds = np.linspace(0.1, 0.9, 17)  # More granular thresholds
+    best_thresholds = {}
+    threshold_results = []
+
+    print("Analyzing optimal thresholds for each emotion...")
     for emotion in emotion_labels:
         idx = emotion_labels.index(emotion)
         f1_scores = []
@@ -250,22 +329,31 @@ def run_threshold_analysis(all_probs, true_labels, output_dir):
             f1_scores.append(f1)
 
         best_idx = int(np.argmax(f1_scores))
-        best_thresh = thresholds[best_idx]
-        best_f1 = f1_scores[best_idx]
+        best_thresh = float(thresholds[best_idx])
+        best_f1 = float(f1_scores[best_idx])
+        default_f1 = float(f1_scores[8])  # 0.5 threshold (index 8 in 0.1-0.9 range)
 
-        best_thresholds.append({
+        # Store results
+        best_thresholds[emotion] = best_thresh
+
+        threshold_results.append({
             "emotion": emotion,
             "best_threshold": best_thresh,
             "best_f1": best_f1,
-            "default_f1": f1_scores[4]  # 0.5 threshold
+            "default_f1": default_f1,
+            "improvement": ((best_f1 - default_f1) / (default_f1 + 1e-8)) * 100
         })
 
-        # Save plot for each emotion
-        plt.figure(figsize=(8, 5))
-        plt.plot(thresholds, f1_scores, marker='o', color='teal', linewidth=2)
-        plt.axvline(x=best_thresh, color='red', linestyle='--', alpha=0.7, label=f'Best: {best_thresh:.1f}')
-        plt.axvline(x=0.5, color='orange', linestyle='--', alpha=0.7, label='Default: 0.5')
-        plt.title(f"F1-Score vs Threshold for '{emotion}'")
+        print(f"  {emotion}: {best_thresh:.2f} (F1: {best_f1:.3f} vs {default_f1:.3f})")
+
+        # Save individual threshold plots
+        plt.figure(figsize=(10, 6))
+        plt.plot(thresholds, f1_scores, marker='o', color='teal', linewidth=2, markersize=4)
+        plt.axvline(x=best_thresh, color='red', linestyle='--', alpha=0.7,
+                    label=f'Best: {best_thresh:.2f} (F1: {best_f1:.3f})')
+        plt.axvline(x=0.5, color='orange', linestyle='--', alpha=0.7,
+                    label=f'Default: 0.5 (F1: {default_f1:.3f})')
+        plt.title(f"F1-Score vs Threshold for '{emotion}'", fontsize=14, fontweight='bold')
         plt.xlabel("Threshold")
         plt.ylabel("F1-Score")
         plt.grid(True, alpha=0.3)
@@ -274,13 +362,25 @@ def run_threshold_analysis(all_probs, true_labels, output_dir):
         plt.savefig(f"{output_dir}/threshold_analysis_{emotion}.png", dpi=300, bbox_inches='tight')
         plt.close()
 
-    # Save threshold analysis results
-    threshold_df = pd.DataFrame(best_thresholds)
-    threshold_df['improvement'] = (
-            (threshold_df['best_f1'] - threshold_df['default_f1']) / threshold_df['default_f1'] * 100).round(2)
+    # Save optimal thresholds to JSON for predict_emo.py
+    with open(f"{output_dir}/optimal_thresholds.json", 'w') as f:
+        json.dump(best_thresholds, f, indent=2)
+
+    print(f"💾 Optimal thresholds saved to: {output_dir}/optimal_thresholds.json")
+
+    # Create threshold analysis DataFrame
+    threshold_df = pd.DataFrame(threshold_results)
+    threshold_df['improvement'] = threshold_df['improvement'].round(2)
     threshold_df.to_csv(f"{output_dir}/best_thresholds.csv", index=False)
 
-    return threshold_df
+    # Summary statistics
+    print(f"\n📊 THRESHOLD OPTIMIZATION SUMMARY:")
+    print(f"   Average optimal threshold: {np.mean(list(best_thresholds.values())):.3f}")
+    print(f"   Emotions improved by >5%: {len(threshold_df[threshold_df['improvement'] > 5])}")
+    print(f"   Maximum improvement: {threshold_df['improvement'].max():.2f}%")
+    print(f"   Average improvement: {threshold_df['improvement'].mean():.2f}%")
+
+    return threshold_df, best_thresholds
 
 
 def save_results(metrics, class_report_df, threshold_df, output_dir, model_name):
@@ -324,7 +424,7 @@ def save_results(metrics, class_report_df, threshold_df, output_dir, model_name)
 def main():
     """Main evaluation pipeline"""
     try:
-        # Load test data (already split)
+        # Load test data
         test_texts, test_labels = load_data()
         print(f"Loaded {len(test_texts)} samples from test dataset")
 
@@ -352,10 +452,14 @@ def main():
         create_visualizations(class_report_df, output_dir)
 
         # Run threshold analysis
-        threshold_df = run_threshold_analysis(all_probs, true_labels, output_dir)
+        threshold_df, best_thresholds = run_threshold_analysis(all_probs, true_labels, output_dir)
 
         # Save all results
         save_results(metrics, class_report_df, threshold_df, output_dir, model_name)
+
+        print(f"\n🎯 OPTIMAL THRESHOLDS GENERATED!")
+        print(f"📄 Copy the thresholds from: {output_dir}/optimal_thresholds.json")
+        print(f"📄 And update your predict_emo.py file")
 
     except Exception as e:
         print(f"❌ Error during evaluation: {str(e)}")

@@ -141,11 +141,11 @@ def main():
     # Test samples
     test_samples = [
         "I am going to hostel after a long holiday at home with my parents, sad",
-        "Oh great, another meeting!",
-        "I love working overtime on weekends",
-        "This is the best day ever",
-        "Yeah, because that's exactly what I wanted to hear",
-        "I'm really happy about this situation"
+        # "Oh great, another meeting!",
+        # "I love working overtime on weekends",
+        # "This is the best day ever",
+        # "Yeah, because that's exactly what I wanted to hear",
+        # "I'm really happy about this situation"
     ]
 
     print("🧪 Testing sample texts:")

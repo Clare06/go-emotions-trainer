@@ -226,9 +226,9 @@ def train_model(model, train_loader, valid_loader, num_epochs=20, learning_rate=
               f"Time: {epoch_time:.1f}s")
 
         # Early stopping
-        # if patience_counter >= 20:
-        #     print(f"🛑 Early stopping at epoch {epoch + 1}")
-        #     break
+        if patience_counter >= 5:
+            print(f"🛑 Early stopping at epoch {epoch + 1}")
+            break
 
     # Load best model
     if best_model_state is not None:
@@ -515,8 +515,8 @@ def main():
     print(f"Device: {device}")
 
     # Configuration
-    DATA_FOLDER = "cleaned_sarc"
-    BATCH_SIZE = 16
+    DATA_FOLDER = "cleaned_sarc_50_50_v1"
+    BATCH_SIZE = 64
     LEARNING_RATE = 0.001
     NUM_EPOCHS = 25
 

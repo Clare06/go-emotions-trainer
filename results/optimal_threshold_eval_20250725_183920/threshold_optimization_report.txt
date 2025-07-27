@@ -1,0 +1,39 @@
+🎯 THRESHOLD OPTIMIZATION EVALUATION REPORT
+============================================================
+
+📊 EXECUTIVE SUMMARY:
+Model: xlm-roberta-base
+Evaluation Date: 2025-07-25 18:39:23
+Number of Emotions: 27
+Default Threshold: 0.5 (uniform)
+Optimal Thresholds: Emotion-specific (range: 0.15 - 0.55)
+
+🎯 KEY IMPROVEMENTS:
+- F1-Macro: 0.3466 → 0.4233 (+0.0768)
+- F1-Micro: 0.4241 → 0.4629 (+0.0388)
+- Subset Accuracy: 0.2898 → 0.2581
+- Hamming Loss: 0.0417 → 0.0555
+
+📈 EMOTION-LEVEL ANALYSIS:
+- Emotions with improved F1-score: 27/27 (100.0%)
+- Average F1-score improvement: 0.0768
+- Maximum improvement: 0.3404 (annoyance)
+- Emotions with >10% improvement: 16/27
+
+🎛️ THRESHOLD ANALYSIS:
+- Average optimal threshold: 0.278
+- Threshold range: 0.15 - 0.55
+- Emotions with threshold < 0.3: 16/27
+- Emotions with threshold > 0.4: 2/27
+
+🏆 TOP 10 MOST IMPROVED EMOTIONS:
+- annoyance: 0.030 → 0.370 (+0.340, +1131.0%)
+- grief: 0.000 → 0.254 (+0.254, +0.0%)
+- pride: 0.000 → 0.223 (+0.223, +0.0%)
+- realization: 0.123 → 0.277 (+0.154, +125.5%)
+- disapproval: 0.303 → 0.428 (+0.125, +41.4%)
+- confusion: 0.312 → 0.411 (+0.099, +31.5%)
+- excitement: 0.237 → 0.316 (+0.079, +33.1%)
+- anger: 0.389 → 0.467 (+0.078, +20.2%)
+- curiosity: 0.481 → 0.559 (+0.078, +16.2%)
+- disappointment: 0.211 → 0.282 (+0.071, +33.7%)
