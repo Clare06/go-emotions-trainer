@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import nltk
 from nltk.tokenize import sent_tokenize
 from deep_translator import GoogleTranslator
+import networkx as nx
+from nltk import word_tokenize
 
 # Load environment variables
 load_dotenv()
@@ -80,6 +82,101 @@ class OptimizedEmotionPredictor:
             print("⚠️ Translation failed:", e)
             return text  # fallback to original
 
+    def build_emotion_kg(self):
+        G = nx.Graph()
+        # Add emotion nodes
+        for emotion in emotion_labels:
+            G.add_node(emotion)
+        triggers = {
+            'admiration': ['stunning view', 'beautiful architecture', 'amazing design', 'impressive facilities',
+                           'gorgeous sunset', 'breathtaking scenery', 'elegant decor', 'wonderful craftsmanship',
+                           'incredible location', 'sundara'],
+            'amusement': ['funny staff', 'hilarious experience', 'entertaining show', 'playful atmosphere', 'joke',
+                          'amusing incident', 'lighthearted vibe', 'comical error', 'witty service', 'enjoyable games',
+                          'laughable mistake', 'cheerful crowd'],
+            'anger': ['rude staff', 'overpriced', 'terrible service', 'frustrating wait', 'annoying noise',
+                      'fight with manager', 'infuriating delay', 'outrageous bill', 'aggravating crowd',
+                      'irritating insects', 'furious about cleanliness', 'enraging scam'],
+            'annoyance': ['minor issue', 'slight delay', 'bothersome smell', 'irritating music', 'pesky mosquitoes',
+                          'annoying crowd', 'frustrating parking', 'mild discomfort', 'bothersome noise',
+                          'irksome wait', 'petty complaint', 'nagging problem'],
+            'approval': ['great value', 'recommend highly', 'worth visiting', 'excellent choice', 'approve of service',
+                         'good decision', 'positive experience', 'thumbs up', 'well done', 'satisfied customer',
+                         'endorse this place', 'favorable review'],
+            'caring': ['helpful staff', 'thoughtful service', 'caring host', 'attentive care', 'warm welcome',
+                       'supportive environment', 'kind gesture', 'empathetic response', 'nurturing atmosphere',
+                       'considerate amenities', 'gentle handling', 'protective measures'],
+            'confusion': ['confusing layout', 'unclear directions', 'mixed signals', 'baffling menu', 'puzzling rules',
+                          'disorienting paths', 'bewildering experience', 'uncertain about quality',
+                          'muddled instructions', 'perplexing pricing', 'lost in crowd'],
+            'curiosity': ['intriguing history', 'mysterious ruins', 'curious artifacts', 'exploring hidden spots',
+                          'wondering about', 'fascinating facts', 'inquisitive tour', 'eager to discover',
+                          'piqued interest', 'questioning origins', 'alluring mystery'],
+            'desire': ['craving food', 'want to return', 'longing for relaxation', 'eager to stay', 'desire luxury',
+                       'yearning for adventure', 'wishing for more', 'tempting menu', 'hankering for view',
+                       'coveting experience', 'aspiring visit'],
+            'disappointment': ['below expectations', 'let down', 'disappointing food', 'failed promise',
+                               'regret visiting', 'underwhelming view', 'dashed hopes', 'mediocre service',
+                               'unfulfilled hype', 'sad letdown', 'frustrated outcome', 'disheartening stay'],
+            'disapproval': ['poor quality', 'not recommended', 'disapprove of hygiene', 'bad choice',
+                            'unacceptable behavior', 'frown upon', 'negative review', 'criticize management',
+                            'object to noise', 'condemn facilities', 'reject this place', 'dislike strongly'],
+            'disgust': ['dirty room', 'filthy bathroom', 'disgusting smell', 'revolting food', 'nasty insects',
+                        'gross hygiene', 'repulsive odor', 'sickening sight', 'appalling cleanliness',
+                        'vile conditions', 'nauseating experience', 'kadu'],
+            'embarrassment': ['awkward situation', 'embarrassing mistake', 'humiliating service', 'shameful experience',
+                              'cringeworthy moment', 'red-faced error', 'mortifying incident', 'uncomfortable vibe',
+                              'disgraceful handling', 'belittling staff', 'shaming review'],
+            'excitement': ['thrilling adventure', 'exciting activities', 'buzzing atmosphere', 'electrifying event',
+                           'pumped up', 'adrenaline rush', 'vibrant energy', 'exhilarating view', 'heart-pounding fun',
+                           'eager anticipation', 'lively crowd', 'dynamic place'],
+            'fear': ['scary area', 'unsafe at night', 'frightening crowd', 'alarming noise', 'terrifying experience',
+                     'nerve-wracking path', 'dreadful security', 'intimidating surroundings', 'fearful of theft',
+                     'spooky ambiance', 'anxious about safety'],
+            'gratitude': ['thankful for service', 'appreciative host', 'grateful experience', 'thanks to staff',
+                          'obliged for help', 'indebted to', 'appreciate kindness', 'thankful view', 'gracious welcome',
+                          'blessed stay', 'heartfelt thanks', 'nandri'],
+            'grief': ['tragic loss', 'mournful memory', 'heartbreaking event', 'sorrowful place', 'grieving over',
+                      'painful reminder', 'devastating news', 'lamenting failure', 'woeful experience',
+                      'bereaved feeling', 'mourn loss', 'deep sorrow'],
+            'joy': ['happy stay', 'joyful experience', 'delightful food', 'cheerful atmosphere', 'blissful relaxation',
+                    'ecstatic view', 'gleeful moments', 'merry crowd', 'uplifting vibe', 'fun celebration',
+                    'radiant happiness', 'santhosam'],
+            'love': ['adore this place', 'love the view', 'cherish memories', 'passionate about', 'fond of service',
+                     'heartwarming', 'beloved spot', 'affectionate welcome', 'endearing charm', 'romantic setting',
+                     'treasure experience', 'priyam'],
+            'nervousness': ['anxious wait', 'nervous about safety', 'tense atmosphere', 'apprehensive crowd',
+                            'worried service', 'uneasy feeling', 'jittery experience', 'fidgety moments',
+                            'restless night', 'edgy vibe', 'nervous anticipation'],
+            'optimism': ['hopeful return', 'positive outlook', 'optimistic about', 'bright future visit',
+                         'encouraging signs', 'upbeat review', 'promising place', 'confident recommendation',
+                         'hopeful improvement', 'cheerful prospects', 'asai'],
+            'pride': ['proud achievement', 'pride in heritage', 'boastful review', 'honored to visit', 'self-satisfied',
+                      'dignified place', 'prestigious location', 'arrogant charm', 'vainglorious staff',
+                      'noble feeling', 'elevated status'],
+            'realization': ['sudden insight', 'eye-opening experience', 'dawning awareness', 'realized truth',
+                            'aha moment', 'epiphany about quality', 'uncovered fact', 'revelation in review',
+                            'discovered hidden gem', 'understood issue', 'clarifying visit'],
+            'relief': ['relieved after', 'sigh of relief', 'eased tension', 'comforting end', 'stress-free stay',
+                       'calming atmosphere', 'soothing experience', 'unburdened feeling', 'relaxed finally',
+                       'alleviated worry', 'peaceful resolution'],
+            'remorse': ['regret choosing', 'sorry for visit', 'remorseful review', 'guilty pleasure', 'apologetic tone',
+                        'rueful experience', 'penitent feeling', 'contrite about', 'ashamed of choice',
+                        'repentant stay', 'sorrowful regret'],
+            'sadness': ['sad experience', 'depressing place', 'heartbreaking view', 'melancholy atmosphere',
+                        'downcast mood', 'gloomy stay', 'tearful memory', 'mournful night', 'despondent review',
+                        'woeful disappointment', 'dukka'],
+            'surprise': ['unexpected delight', 'shocking discovery', 'surprising quality', 'astonishing view',
+                         'jaw-dropping moment', 'unforeseen issue', 'startling event', 'amazing twist',
+                         'pleasant shock', 'unanticipated fun', 'bewildering surprise']
+        }
+        # Add weighted edges (boost factors)
+        for emotion, words in triggers.items():
+            for word in words:
+                G.add_node(word)
+                G.add_edge(word, emotion, weight=0.1)  # Adjustable boost
+        return G
+
     def split_into_sentences(self, text, max_token_length=512):
         """Split text into sentences while respecting token limits"""
         sentences = sent_tokenize(text.strip())
@@ -125,6 +222,18 @@ class OptimizedEmotionPredictor:
                 outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
                 logits = outputs.logits
                 probabilities = torch.sigmoid(logits).cpu().numpy()[0]
+
+            kg = self.build_emotion_kg()
+            entities = set(word_tokenize(text.lower()))  # Extract words as entities
+            adjustment = np.zeros(len(emotion_labels))
+            for entity in entities:
+                if entity in kg:
+                    for neighbor in kg.neighbors(entity):
+                        if neighbor in emotion_labels:
+                            idx = emotion_labels.index(neighbor)
+                            adjustment[idx] += kg[entity][neighbor]['weight']  # Accumulate boost
+            probabilities += adjustment
+            probabilities = np.clip(probabilities, 0, 1)  # Keep between 0-1
 
             return probabilities
 

@@ -1,0 +1,142 @@
+{
+  "enabled": true,
+  "enhancement_weight": 0.15,
+  "entity_boost": 0.3,
+  "negation_penalty": 0.4,
+  "context_window": 3,
+  "emotion_entity_mapping": {
+    "joy": [
+      "celebration",
+      "party",
+      "success",
+      "achievement",
+      "victory",
+      "wedding",
+      "birthday"
+    ],
+    "love": [
+      "family",
+      "relationship",
+      "partner",
+      "friend",
+      "marriage",
+      "kiss",
+      "hug"
+    ],
+    "admiration": [
+      "hero",
+      "leader",
+      "expert",
+      "genius",
+      "champion",
+      "role_model"
+    ],
+    "gratitude": [
+      "thanks",
+      "help",
+      "support",
+      "gift",
+      "kindness",
+      "favor"
+    ],
+    "excitement": [
+      "adventure",
+      "surprise",
+      "news",
+      "opportunity",
+      "travel"
+    ],
+    "amusement": [
+      "joke",
+      "comedy",
+      "funny",
+      "humor",
+      "laugh",
+      "entertainment"
+    ],
+    "anger": [
+      "conflict",
+      "fight",
+      "argument",
+      "injustice",
+      "betrayal",
+      "enemy"
+    ],
+    "sadness": [
+      "death",
+      "loss",
+      "failure",
+      "goodbye",
+      "separation",
+      "illness"
+    ],
+    "fear": [
+      "danger",
+      "threat",
+      "risk",
+      "unknown",
+      "darkness",
+      "violence"
+    ],
+    "disgust": [
+      "dirt",
+      "poison",
+      "corruption",
+      "waste",
+      "pollution"
+    ],
+    "disappointment": [
+      "failure",
+      "rejection",
+      "cancel",
+      "delay",
+      "broken_promise"
+    ],
+    "surprise": [
+      "unexpected",
+      "sudden",
+      "shock",
+      "revelation",
+      "discovery"
+    ],
+    "confusion": [
+      "puzzle",
+      "mystery",
+      "complex",
+      "unclear",
+      "ambiguous"
+    ],
+    "curiosity": [
+      "question",
+      "research",
+      "investigation",
+      "exploration",
+      "unknown"
+    ]
+  },
+  "negation_words": [
+    "not",
+    "no",
+    "never",
+    "nothing",
+    "nobody",
+    "nowhere",
+    "neither",
+    "nor",
+    "none",
+    "isn't",
+    "aren't",
+    "wasn't",
+    "weren't",
+    "don't",
+    "doesn't",
+    "didn't",
+    "won't",
+    "wouldn't",
+    "can't",
+    "cannot",
+    "couldn't",
+    "shouldn't",
+    "mustn't"
+  ]
+}
